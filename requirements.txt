@@ -1,0 +1,24 @@
+# Core ML
+tensorflow>=2.17.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Dataset download
+kagglehub>=0.2.0
+
+# Image IO / cleaning
+pillow>=10.0.0
+
+# Training/evaluation
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# App
+streamlit>=1.28.0
+
+# PPT generator (optional, but included for final-year submission)
+python-pptx>=0.6.23
+
+# Utilities
+tqdm>=4.66.0

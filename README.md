@@ -1,0 +1,97 @@
+# 🎨 Artwork Classifier (Production-Ready)
+
+An end-to-end artwork type classifier using **transfer learning** (EfficientNetB0 / ResNet50), a **clean dataset pipeline** (download → corrupt-image cleaning → stratified train/val/test splits), full **evaluation metrics**, and a polished **Streamlit** app.
+
+## 🗂️ Project Structure
+
+```
+artworkclassifier/
+├── dataset/
+│   ├── raw/                # optional (links/copies)
+│   ├── processed/          # stratified train/val/test folder view (links/copies)
+│   └── splits/
+│       ├── manifest.csv
+│       ├── split_stats.csv
+│       └── corrupt_images.csv
+├── model/
+│   ├── art_classifier.h5   # FINAL model (required output name)
+│   ├── class_names.json
+│   └── exports/
+│       ├── best_model.keras
+│       ├── test_metrics.json
+│       ├── training_curves.png
+│       └── confusion_matrix.png
+├── app/
+│   └── app.py              # Streamlit app
+├── notebooks/
+│   ├── art_classifier_improved.ipynb
+│   └── ppt/
+│       └── generate_ppt.py
+├── artwork_classifier/     # reusable python modules
+├── download_dataset.py
+├── prepare_dataset.py
+├── train.py
+└── requirements.txt
+```
+
+## ✅ Mandatory Dataset Source
+
+This project uses KaggleHub as the primary dataset source:
+
+```python
+import kagglehub
+path = kagglehub.dataset_download("thedownhill/art-images-drawings-painting-sculpture-engraving")
+print("Path:", path)
+```
+
+The pipeline then:
+- deletes unreadable/corrupted images
+- builds a unified manifest
+- creates stratified train/val/test splits
+- trains a transfer-learning model with ImageDataGenerator augmentation
+
+## 🧪 Terminal Commands (Exact)
+
+### 1) Install dependencies
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2) Download dataset (optional; prepare step also downloads)
+
+```bash
+python3 download_dataset.py
+```
+
+### 3) Clean + split dataset
+
+```bash
+python3 prepare_dataset.py
+```
+
+### 4) Train model (saves `model/art_classifier.h5`)
+
+```bash
+python3 train.py
+```
+
+Optional backbone:
+
+```bash
+python3 train.py --backbone resnet50
+```
+
+### 5) Run the Streamlit app
+
+```bash
+streamlit run app/app.py
+```
+
+### 6) Generate PPT
+
+```bash
+python3 notebooks/ppt/generate_ppt.py
+```
