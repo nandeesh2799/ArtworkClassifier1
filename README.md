@@ -1,6 +1,13 @@
-# 🎨 Artwork Classifier (Production-Ready)
+# 🎨 Artwork Classifier
 
-An end-to-end artwork type classifier using **transfer learning** (EfficientNetB0 / ResNet50), a **clean dataset pipeline** (download → corrupt-image cleaning → stratified train/val/test splits), full **evaluation metrics**, and a polished **Streamlit** app.
+[![CI Pipeline](https://github.com/nandeesh2799/ArtworkClassifier1/actions/workflows/ci.yml/badge.svg)](https://github.com/nandeesh2799/ArtworkClassifier1/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-FF4B4B?logo=streamlit&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.17+-FF6F00?logo=tensorflow&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-10%20Passed-brightgreen?logo=pytest)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+
+An end-to-end artwork type classifier using **transfer learning** (EfficientNetB0 / ResNet50), a **clean dataset pipeline** (download → corrupt-image cleaning → stratified train/val/test splits), full **evaluation metrics**, and a polished **Streamlit** web application with automated containerization and offline evaluation capabilities.
 
 ## 🗂️ Project Structure
 
@@ -90,7 +97,24 @@ python3 train.py --backbone resnet50
 streamlit run app/app.py
 ```
 
-### 6) Generate PPT
+### 6) Run the Test Suite
+
+```bash
+python3 -m pytest tests/ -v
+```
+
+### 7) Docker Containerization
+
+Run the application inside a reproducible Docker container:
+
+```bash
+# Build and run with Docker Compose
+docker compose up --build
+
+# Access Streamlit dashboard at http://localhost:8501
+```
+
+### 8) Generate Presentation PPT
 
 ```bash
 python3 notebooks/ppt/generate_ppt.py

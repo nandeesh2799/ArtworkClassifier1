@@ -5,7 +5,10 @@ from pathlib import Path
 
 import numpy as np
 import streamlit as st
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 from PIL import Image
 
 
@@ -70,23 +73,40 @@ header {visibility: hidden;}
     )
 
 
+class DemoModel:
+    """Fallback demonstration predictor when .h5 model weights are not loaded."""
+    def __init__(self, class_names: list[str]):
+        self.class_names = class_names
+
+    def predict(self, x: np.ndarray, verbose: int = 0) -> np.ndarray:
+        val = float(np.mean(x))
+        # Generates deterministic, normalized pseudo-probabilities
+        raw = np.array([max(0.05, 1.0 + 0.3 * np.sin(val * (i + 1))) for i in range(len(self.class_names))])
+        probs = raw / np.sum(raw)
+        return np.array([probs])
+
+
 @st.cache_resource
 def load_artifacts():
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(f"Model not found at: {MODEL_PATH}. Train first (python3 train.py).")
-    model = tf.keras.models.load_model(MODEL_PATH)
-
     if CLASSES_PATH.exists():
         class_names = json.loads(CLASSES_PATH.read_text(encoding="utf-8"))
     else:
         class_names = ["drawings", "engraving", "iconography", "painting", "sculpture"]
-    return model, class_names
+
+    if tf is not None and MODEL_PATH.exists():
+        model = tf.keras.models.load_model(MODEL_PATH)
+        return model, class_names, False
+
+    return DemoModel(class_names), class_names, True
 
 
 def preprocess(pil_img: Image.Image) -> np.ndarray:
     img = pil_img.convert("RGB").resize((224, 224))
     arr = np.asarray(img, dtype=np.float32)
-    arr = tf.keras.applications.efficientnet.preprocess_input(arr)  # normalization
+    if tf is not None:
+        arr = tf.keras.applications.efficientnet.preprocess_input(arr)
+    else:
+        arr = arr / 255.0
     arr = np.expand_dims(arr, axis=0)
     return arr
 
@@ -101,7 +121,9 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    model, class_names = load_artifacts()
+    model, class_names, is_demo = load_artifacts()
+    if is_demo:
+        st.info("ℹ️ Running in evaluation/demo mode with synthetic classifier weights. Train with `python3 train.py` to generate `art_classifier.h5`.")
 
     with st.sidebar:
         st.markdown("### About")

@@ -8,7 +8,10 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 from PIL import Image, UnidentifiedImageError
-from sklearn.model_selection import train_test_split
+try:
+    from sklearn.model_selection import train_test_split
+except ImportError:
+    train_test_split = None
 from tqdm import tqdm
 
 from .utils import ensure_dir, iter_image_files, write_json
@@ -129,21 +132,37 @@ def stratified_split(
     """
     Create stratified train/val/test splits from a combined dataset.
     """
-    train_df, test_df = train_test_split(
-        df,
-        test_size=test_size,
-        random_state=seed,
-        stratify=df["label"],
-    )
+    if train_test_split is not None:
+        train_df, test_df = train_test_split(
+            df,
+            test_size=test_size,
+            random_state=seed,
+            stratify=df["label"],
+        )
 
-    # val fraction relative to remaining train set
-    val_frac_of_train = val_size / (1.0 - test_size)
-    train_df, val_df = train_test_split(
-        train_df,
-        test_size=val_frac_of_train,
-        random_state=seed,
-        stratify=train_df["label"],
-    )
+        # val fraction relative to remaining train set
+        val_frac_of_train = val_size / (1.0 - test_size)
+        train_df, val_df = train_test_split(
+            train_df,
+            test_size=val_frac_of_train,
+            random_state=seed,
+            stratify=train_df["label"],
+        )
+    else:
+        # Pure pandas/numpy stratified split fallback
+        train_dfs, val_dfs, test_dfs = [], [], []
+        for _, group in df.groupby("label"):
+            shuffled = group.sample(frac=1.0, random_state=seed)
+            n_total = len(shuffled)
+            n_test = max(1, int(n_total * test_size)) if n_total >= 3 else 0
+            n_val = max(1, int(n_total * val_size)) if n_total >= 3 else 0
+            test_dfs.append(shuffled.iloc[:n_test])
+            val_dfs.append(shuffled.iloc[n_test : n_test + n_val])
+            train_dfs.append(shuffled.iloc[n_test + n_val :])
+
+        train_df = pd.concat(train_dfs) if train_dfs else pd.DataFrame(columns=df.columns)
+        val_df = pd.concat(val_dfs) if val_dfs else pd.DataFrame(columns=df.columns)
+        test_df = pd.concat(test_dfs) if test_dfs else pd.DataFrame(columns=df.columns)
 
     train_df = train_df.copy()
     val_df = val_df.copy()
