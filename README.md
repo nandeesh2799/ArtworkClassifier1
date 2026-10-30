@@ -6,118 +6,153 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.17+-FF6F00?logo=tensorflow&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-10%20Passed-brightgreen?logo=pytest)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-An end-to-end artwork type classifier using **transfer learning** (EfficientNetB0 / ResNet50), a **clean dataset pipeline** (download → corrupt-image cleaning → stratified train/val/test splits), full **evaluation metrics**, and a polished **Streamlit** web application with automated containerization and offline evaluation capabilities.
+An end-to-end, deep learning computer vision system for classifying fine art into mediums, styles, and artistic genres (drawings, paintings, sculptures, engravings, and iconography). Employs **Transfer Learning** (EfficientNetB0 / ResNet50 backbones), automated corrupt-image cleaning heuristics, stratified multi-class splits, resilient `DemoModel` fallback inference, and an interactive **Streamlit** dashboard with Docker containerization.
+
+---
+
+## 🚀 Key Architectural Features
+
+- **Transfer Learning Backbones**: Pre-trained ImageNet feature extractors (EfficientNetB0 / ResNet50) fine-tuned with dense classification heads, spatial dropout, and learning rate scheduling.
+- **Automated Data Hygiene Pipeline**:
+  - Automatically identifies and purges truncated, unreadable, or corrupted image files before tensor ingestion.
+  - Generates stratified Train/Validation/Test splits (`70% / 15% / 15%`) to preserve class balance across minority art styles.
+- **Resilient Fallback Mode (`DemoModel`)**: If heavy pre-trained weights (`.h5` / `.keras`) are absent on disk, the system seamlessly transitions to an intelligent mock inference engine providing normalized probability distributions and top-k confidence scores.
+- **Production Containerization**: Multi-stage Docker build with automated healthcheck probes on Streamlit's `/_stcore/health` endpoint.
+- **Automated Test Suite**: 100% passing Pytest suite verifying preprocessing tensors, grayscale expansion, probability normalization, class manifest schemas, and corrupt-image detection.
+
+---
+
+## 🧠 Pipeline Architecture & Workflow
+
+```text
+ ┌──────────────────────┐
+ │ Raw Artwork Images   │ (Drawings, Paintings, Sculptures, Engravings)
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌──────────────────────┐
+ │  Data Hygiene Engine │ ──▶ Detect & Purge Corrupt Image Tensors
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌──────────────────────┐
+ │   Stratified Split   │ ──▶ 70% Train | 15% Validation | 15% Test
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌──────────────────────┐
+ │   Transfer Learning  │ ──▶ EfficientNetB0 / ResNet50 + Data Augmentation
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌──────────────────────┐
+ │   Model Evaluator    │ ──▶ Accuracy, Macro Precision/Recall, Confusion Matrix
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌──────────────────────┐
+ │ Streamlit Dashboard  │ ──▶ Drag-and-drop Image Upload + Top-K Probability Bars
+ └──────────────────────┘
+```
+
+---
 
 ## 🗂️ Project Structure
 
-```
-artworkclassifier/
+```text
+ArtworkClassifier1/
 ├── dataset/
-│   ├── raw/                # optional (links/copies)
-│   ├── processed/          # stratified train/val/test folder view (links/copies)
+│   ├── raw/                    # Raw source images
+│   ├── processed/              # Stratified train/val/test splits
 │   └── splits/
-│       ├── manifest.csv
-│       ├── split_stats.csv
-│       └── corrupt_images.csv
+│       ├── manifest.csv        # Master dataset metadata
+│       └── corrupt_images.csv  # Purged corrupted files log
 ├── model/
-│   ├── art_classifier.h5   # FINAL model (required output name)
-│   ├── class_names.json
+│   ├── art_classifier.h5       # Serialized production model weights
+│   ├── class_names.json        # Class label mapping
 │   └── exports/
-│       ├── best_model.keras
-│       ├── test_metrics.json
-│       ├── training_curves.png
-│       └── confusion_matrix.png
+│       ├── best_model.keras    # Best checkpoint export
+│       ├── test_metrics.json   # Holdout test metrics
+│       └── training_curves.png # Loss and accuracy plots
 ├── app/
-│   └── app.py              # Streamlit app
-├── notebooks/
-│   ├── art_classifier_improved.ipynb
-│   └── ppt/
-│       └── generate_ppt.py
-├── artwork_classifier/     # reusable python modules
-├── download_dataset.py
-├── prepare_dataset.py
-├── train.py
-└── requirements.txt
+│   └── app.py                  # Interactive Streamlit web application
+├── artwork_classifier/         # Reusable core library
+│   ├── data.py                 # Dataset download, cleaning, and stratification
+│   └── utils.py                # Image validation and filesystem helpers
+├── tests/
+│   ├── test_dataset_and_utils.py       # Data pipeline unit tests
+│   └── test_preprocessing_and_app.py  # Inference & Streamlit tests
+├── Dockerfile                  # Production container definition
+├── docker-compose.yml          # Container orchestration with healthchecks
+├── pytest.ini                  # Pytest configuration with pythonpath
+└── requirements.txt            # Python dependencies
 ```
 
-## ✅ Mandatory Dataset Source
+---
 
-This project uses KaggleHub as the primary dataset source:
+## 🧪 Testing & Verification
 
-```python
-import kagglehub
-path = kagglehub.dataset_download("thedownhill/art-images-drawings-painting-sculpture-engraving")
-print("Path:", path)
-```
-
-The pipeline then:
-- deletes unreadable/corrupted images
-- builds a unified manifest
-- creates stratified train/val/test splits
-- trains a transfer-learning model with ImageDataGenerator augmentation
-
-## 🧪 Terminal Commands (Exact)
-
-### 1) Install dependencies
+Run the test suite using pytest:
 
 ```bash
+# Execute unit tests
+pytest -v
+
+# Or via python module runner
+python3 -m pytest tests/ -v
+```
+
+All 10 tests validate tensor shape consistency, RGB conversion from grayscale, probability sum invariants, class catalog parsing, and corrupted-file recovery.
+
+---
+
+## ⚙️ Quickstart & Local Setup
+
+### 1) Environment Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/nandeesh2799/ArtworkClassifier1.git
+cd ArtworkClassifier1
+
+# Create and activate virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2) Download dataset (optional; prepare step also downloads)
+### 2) Prepare Dataset & Train
 
 ```bash
-python3 download_dataset.py
-```
-
-### 3) Clean + split dataset
-
-```bash
+# Download and clean dataset
 python3 prepare_dataset.py
-```
 
-### 4) Train model (saves `model/art_classifier.h5`)
-
-```bash
+# Train transfer learning model (EfficientNetB0 by default)
 python3 train.py
-```
 
-Optional backbone:
-
-```bash
+# Or train with ResNet50 backbone
 python3 train.py --backbone resnet50
 ```
 
-### 5) Run the Streamlit app
+### 3) Launch Streamlit Web UI
 
 ```bash
 streamlit run app/app.py
 ```
 
-### 6) Run the Test Suite
-
-```bash
-python3 -m pytest tests/ -v
-```
-
-### 7) Docker Containerization
+### 4) Docker Containerization
 
 Run the application inside a reproducible Docker container:
 
 ```bash
-# Build and run with Docker Compose
+# Build and start via Docker Compose
 docker compose up --build
 
-# Access Streamlit dashboard at http://localhost:8501
-```
-
-### 8) Generate Presentation PPT
-
-```bash
-python3 notebooks/ppt/generate_ppt.py
+# Open browser at http://localhost:8501
 ```
 
 
