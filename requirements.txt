@@ -7,7 +7,7 @@ pandas>=2.0.0
 kagglehub>=0.2.0
 
 # Image IO / cleaning
-pillow>=10.0.0
+pillow>=13.0.0
 
 # Training/evaluation
 scikit-learn>=1.3.0
